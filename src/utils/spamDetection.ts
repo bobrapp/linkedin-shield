@@ -7,6 +7,15 @@ interface SpamAnalysis {
   indicators: string[];
 }
 
+export interface CustomRule {
+  id: string;
+  pattern: string;
+  indicator: string;
+  weight: number;
+  isRegex: boolean;
+  enabled: boolean;
+}
+
 const spamPatterns = [
   { pattern: /\b(make|earn|get)\s+\$?\d+[k]?\+?\s*(per|\/|a)?\s*(month|week|day)/i, indicator: "Money promises", weight: 25 },
   { pattern: /🔥|💰|💵|💸|⚡/g, indicator: "Excessive emojis", weight: 15 },
@@ -29,9 +38,26 @@ const legitimacyIndicators = [
   { pattern: /\b(would you|are you|could you)\b/gi, indicator: "Polite inquiry", weight: -10 },
 ];
 
-export function analyzeMessage(content: string): SpamAnalysis {
+export function analyzeMessage(content: string, customRules: CustomRule[] = []): SpamAnalysis {
   let spamScore = 0;
   const detectedIndicators: string[] = [];
+
+  // Check custom rules first
+  for (const rule of customRules.filter(r => r.enabled)) {
+    try {
+      const regex = new RegExp(rule.pattern, "gi");
+      const matches = content.match(regex);
+      if (matches) {
+        spamScore += rule.weight * (matches.length > 3 ? 1.5 : 1);
+        if (!detectedIndicators.includes(rule.indicator)) {
+          detectedIndicators.push(rule.indicator);
+        }
+      }
+    } catch (error) {
+      // Skip invalid regex patterns
+      console.warn(`Invalid custom rule pattern: ${rule.pattern}`);
+    }
+  }
 
   // Check spam patterns
   for (const { pattern, indicator, weight } of spamPatterns) {
@@ -81,8 +107,8 @@ export function analyzeMessage(content: string): SpamAnalysis {
   };
 }
 
-export async function analyzeMessageAsync(content: string): Promise<SpamAnalysis> {
+export async function analyzeMessageAsync(content: string, customRules: CustomRule[] = []): Promise<SpamAnalysis> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
-  return analyzeMessage(content);
+  return analyzeMessage(content, customRules);
 }

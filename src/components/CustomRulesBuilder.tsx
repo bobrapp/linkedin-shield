@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { RuleTemplatesLibrary } from "@/components/RuleTemplatesLibrary";
 import { Plus, Trash2, TestTube2, Settings } from "lucide-react";
 import { toast } from "sonner";
 
@@ -57,6 +58,10 @@ export function CustomRulesBuilder({ rules, onRulesChange }: CustomRulesBuilderP
     } catch (error) {
       toast.error("Invalid regex pattern. Please check your syntax.");
     }
+  };
+
+  const handleImportRules = (importedRules: CustomRule[]) => {
+    onRulesChange([...rules, ...importedRules]);
   };
 
   const deleteRule = (id: string) => {
@@ -114,9 +119,12 @@ export function CustomRulesBuilder({ rules, onRulesChange }: CustomRulesBuilderP
 
   return (
     <Card className="p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Settings className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold text-lg">Custom Rules Builder</h3>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Settings className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-lg">Custom Rules Builder</h3>
+        </div>
+        <RuleTemplatesLibrary onImport={handleImportRules} existingRuleCount={rules.length} />
       </div>
 
       {/* Add New Rule */}

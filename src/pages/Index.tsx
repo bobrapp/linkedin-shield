@@ -3,8 +3,10 @@ import { MessageCard } from "@/components/MessageCard";
 import { StatsCard } from "@/components/StatsCard";
 import { FilterControls } from "@/components/FilterControls";
 import { TestMessage } from "@/components/TestMessage";
+import { CustomRulesBuilder, CustomRule } from "@/components/CustomRulesBuilder";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Filter, Clock, TrendingDown, Github, BookOpen } from "lucide-react";
 import { getSampleMessagesWithTimestamps } from "@/data/sampleMessages";
 import { analyzeMessageAsync } from "@/utils/spamDetection";
@@ -13,6 +15,7 @@ const Index = () => {
   const [filterEnabled, setFilterEnabled] = useState(true);
   const [threshold, setThreshold] = useState(80);
   const [messages] = useState(getSampleMessagesWithTimestamps());
+  const [customRules, setCustomRules] = useState<CustomRule[]>([]);
 
   const stats = useMemo(() => {
     const totalMessages = messages.length;
@@ -116,67 +119,82 @@ const Index = () => {
           />
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Controls */}
-            <FilterControls
-              enabled={filterEnabled}
-              onEnabledChange={setFilterEnabled}
-              threshold={threshold}
-              onThresholdChange={setThreshold}
-              onReset={handleReset}
-            />
+        <Tabs defaultValue="messages" className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+            <TabsTrigger value="messages">Message Feed</TabsTrigger>
+            <TabsTrigger value="rules">Custom Rules</TabsTrigger>
+          </TabsList>
 
-            {/* Messages */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-foreground">
-                  Message Feed
-                  {filterEnabled && (
-                    <Badge variant="secondary" className="ml-2">
-                      {stats.filtered} filtered
-                    </Badge>
-                  )}
-                </h3>
+          <TabsContent value="messages" className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Main Content */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Controls */}
+                <FilterControls
+                  enabled={filterEnabled}
+                  onEnabledChange={setFilterEnabled}
+                  threshold={threshold}
+                  onThresholdChange={setThreshold}
+                  onReset={handleReset}
+                />
+
+                {/* Messages */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-semibold text-foreground">
+                      Message Feed
+                      {filterEnabled && (
+                        <Badge variant="secondary" className="ml-2">
+                          {stats.filtered} filtered
+                        </Badge>
+                      )}
+                    </h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    {visibleMessages.map(({ message, filtered }) => (
+                      <MessageCard key={message.id} message={message} filtered={filtered} />
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {visibleMessages.map(({ message, filtered }) => (
-                  <MessageCard key={message.id} message={message} filtered={filtered} />
-                ))}
+              {/* Sidebar */}
+              <div className="space-y-6">
+                <TestMessage onTest={(content) => analyzeMessageAsync(content, customRules)} />
+
+                {/* Info Card */}
+                <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-6 rounded-lg border border-border">
+                  <h4 className="font-semibold text-foreground mb-2">How it works</h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex gap-2">
+                      <span className="text-primary">•</span>
+                      <span>AI analyzes message patterns in real-time</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Identifies spam indicators with confidence scores</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">•</span>
+                      <span>Customizable threshold for your preferences</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-primary">•</span>
+                      <span>All processing happens locally - complete privacy</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
+          </TabsContent>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <TestMessage onTest={analyzeMessageAsync} />
-
-            {/* Info Card */}
-            <div className="bg-gradient-to-br from-primary/10 to-accent/10 p-6 rounded-lg border border-border">
-              <h4 className="font-semibold text-foreground mb-2">How it works</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>AI analyzes message patterns in real-time</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Identifies spam indicators with confidence scores</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>Customizable threshold for your preferences</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary">•</span>
-                  <span>All processing happens locally - complete privacy</span>
-                </li>
-              </ul>
+          <TabsContent value="rules">
+            <div className="max-w-4xl mx-auto">
+              <CustomRulesBuilder rules={customRules} onRulesChange={setCustomRules} />
             </div>
-          </div>
-        </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Footer */}
